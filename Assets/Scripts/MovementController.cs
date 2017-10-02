@@ -24,6 +24,8 @@ public class MovementController : MonoBehaviour
     private float wallStick;
     private float distanceSinceStep;
     private float stepDistance = 2f;
+    private float airAccelerationMultiplier = 0.5f;
+    private float stopAccelerationMultiplier = 2f;
 
     private RaycastHit2D detectionHit;
 
@@ -210,7 +212,7 @@ public class MovementController : MonoBehaviour
                             //Setting some walljump settings if the player is hitting a wall non-grounded.
                             if (!canWallJump && !isGrounded)
                             {
-                                wallStick = Mathf.Abs(currentSpeed.x) / 80f;
+                                wallStick = Mathf.Max(Mathf.Abs(currentSpeed.x) / 80f, wallStick);
 
                                 wallJumpDirection = Mathf.Sign(currentSpeed.x);
                                 canWallJump = true;
@@ -256,6 +258,9 @@ public class MovementController : MonoBehaviour
             wallStick -= Time.deltaTime;
         else if (wallStick < 0)
             canWallJump = false;
+
+        //Setting the speed of the player
+        currentSpeed = new Vector2(Input.GetAxis("Horizontal"), currentSpeed.y);
 
         //Setting the targetSpeed in the horizontal direction.
         targetSpeed.x = Input.GetAxis("Horizontal") * maxSpeed;
@@ -317,9 +322,9 @@ public class MovementController : MonoBehaviour
 
         //Setting the speed of the player in the horizontal direction.
         if (!isGrounded)
-            currentSpeed.x += (targetSpeed.x - currentSpeed.x) * acceleration / 2 * Time.deltaTime;
+            currentSpeed.x += (targetSpeed.x - currentSpeed.x) * acceleration * airAccelerationMultiplier * Time.deltaTime;
         else if (Mathf.Abs(targetSpeed.x) < 1)
-            currentSpeed.x += (targetSpeed.x - currentSpeed.x) * acceleration * 2 * Time.deltaTime;
+            currentSpeed.x += (targetSpeed.x - currentSpeed.x) * acceleration * stopAccelerationMultiplier * Time.deltaTime;
         else
             currentSpeed.x += (targetSpeed.x - currentSpeed.x) * acceleration * Time.deltaTime;
 

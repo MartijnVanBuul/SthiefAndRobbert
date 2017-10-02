@@ -28,6 +28,12 @@ public class CameraMovement : MonoBehaviour
         instance = this;
     }
 
+    /// <summary>
+    /// Method used to shake the camera
+    /// </summary>
+    /// <param name="shake">The duration of the shake</param>
+    /// <param name="intensity">Intensity of the initial shake</param>
+    /// <returns></returns>
     public IEnumerator<float> Shake(float shake, float intensity)
     {
         while (shake > 0)
