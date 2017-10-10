@@ -10,17 +10,17 @@ public class PostGameManager : MonoBehaviour {
 
     public Text TimeValueText;
     public Text ScoreValueText;
+    public Text ContinueText;
 
     private float animateDuration = 0.5f;
 
-    private bool postGameActive;
-    private bool postGameDone;
+    public bool postGameActive;
+    public bool postGameDone;
 
-    private void Update()
+    void Update()
     {
         if (Input.GetButtonDown("Fire1") && postGameDone)
-            GetComponentInChildren<Animator>().SetTrigger("MoveDownAgain");
-
+            Timing.RunCoroutine(Deactivate());
     }
 
     private void Awake()
@@ -35,12 +35,35 @@ public class PostGameManager : MonoBehaviour {
 
         //Sets the value of time and score.
         Timing.RunCoroutine(AnimateValues());
+
+        postGameActive = true;
+    }
+
+
+    private IEnumerator<float> Deactivate()
+    {
+        //Fading out texts.
+        foreach (Text text in transform.GetChild(0).GetComponentsInChildren<Text>())
+        {
+            text.canvasRenderer.SetAlpha(1f);
+            text.CrossFadeAlpha(0, animateDuration / 2, true);
+        }
+
+        yield return Timing.WaitForSeconds(animateDuration);
+
+        //Deactivates all the children.
+        transform.GetChild(0).gameObject.SetActive(false);
+
+        postGameActive = false;
+        postGameDone = false;
+
+        Timing.RunCoroutine(FadeManager.instance.FadeOut(animateDuration));
+
     }
 
     private IEnumerator<float> AnimateValues()
     {
         //Moves the text objects
-        //Timing.RunCoroutine(MoveTexts(animateDuration, transform.GetChild(0).GetComponent<RectTransform>(), Vector3.zero));
         GetComponentInChildren<Animator>().SetTrigger("MoveDown");
         yield return Timing.WaitForSeconds(animateDuration + 0.05f);
 
@@ -49,33 +72,22 @@ public class PostGameManager : MonoBehaviour {
         yield return Timing.WaitForSeconds(animateDuration + 0.05f);
 
         //Sets the value of score.
-        Timing.RunCoroutine(increaseValueOverTime(animateDuration, GameManager.instance.Score, ScoreValueText, 0));
+        if (GameManager.instance.Score != 0)
+        {
+            Timing.RunCoroutine(increaseValueOverTime(animateDuration, GameManager.instance.Score, ScoreValueText, 0));
+            yield return Timing.WaitForSeconds(animateDuration);
+        }
+
+        //Fading in continue text.
+        ContinueText.gameObject.SetActive(true);
+        ContinueText.canvasRenderer.SetAlpha(0f);
+        ContinueText.CrossFadeAlpha(1, animateDuration / 2, true);
+
         yield return Timing.WaitForSeconds(animateDuration);
+
+        postGameDone = true;
     }
 
-    ///// <summary>
-    ///// Method that moves values down from top
-    ///// </summary>
-    ///// <param name="duration">Time it takes to move the text down</param>
-    ///// <param name="parentTransform">Transform that moves the text down.</param>
-    ///// <returns></returns>
-    //private IEnumerator<float> MoveTexts(float duration, RectTransform parentTransform, Vector3 targetPosition)
-    //{
-    //    float timer = 0;
-    //    Vector3 startPosition = parentTransform.anchoredPosition;
-
-    //    while (timer < duration)
-    //    {
-    //        timer += Time.deltaTime;
-    //        //Sets Text object with correct value.
-    //        parentTransform.anchoredPosition = startPosition + (targetPosition - startPosition) * Mathf.Pow((timer / duration), 0.05f);
-
-    //        yield return Timing.WaitForOneFrame;
-    //    }
-
-    //    //Setting the final position.
-    //    parentTransform.anchoredPosition = targetPosition;
-    //}
 
     /// <summary>
     /// Method that sets a Text with an increasing value.

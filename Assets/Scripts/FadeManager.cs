@@ -6,8 +6,11 @@ using MovementEffects;
 
 public class FadeManager : MonoBehaviour {
 
+    public static FadeManager instance;
+
     public Image FadeImage;
     private Material transitionMaterial;
+
 
     /// <summary>
     /// Property to make sure the transition material is available.
@@ -17,10 +20,15 @@ public class FadeManager : MonoBehaviour {
         get
         {
             if (transitionMaterial == null)
-                transitionMaterial = Camera.current.GetComponent<SimpleBlit>().TransitionMaterial;
+                transitionMaterial = Camera.main.GetComponent<SimpleBlit>().TransitionMaterial;
 
             return transitionMaterial;
         }
+    }
+
+    void Awake()
+    {
+        instance = this;
     }
 
     void Start () {
@@ -49,7 +57,7 @@ public class FadeManager : MonoBehaviour {
     /// </summary>
     /// <param name="duration">How long it takes to complete the transition.</param>
     /// <returns></returns>
-    private IEnumerator<float> FadeIn(float duration)
+    public IEnumerator<float> FadeIn(float duration)
     {
         //Keeps track of how long the transition is taking.
         float time = 0;
@@ -70,6 +78,31 @@ public class FadeManager : MonoBehaviour {
         TransitionMaterial.SetFloat("_Cutoff", 0);
 
         PostGameManager.instance.Activate();
+    }
+
+    /// <summary>
+    /// Method that makes a transition according to a transition material.
+    /// </summary>
+    /// <param name="duration">How long it takes to complete the transition.</param>
+    /// <returns></returns>
+    public IEnumerator<float> FadeOut(float duration)
+    {
+        //Keeps track of how long the transition is taking.
+        float time = 0;
+
+        //Resetting material value and setting the fade image to maintain black image.
+        TransitionMaterial.SetFloat("_Cutoff", 1);
+        FadeImage.canvasRenderer.SetAlpha(0);
+
+
+        while (time < duration)
+        {
+            //Setting the value of the transition.
+            time += Time.deltaTime;
+            TransitionMaterial.SetFloat("_Cutoff", 1 - time / duration);
+
+            yield return Timing.WaitForOneFrame;
+        }
     }
 
     //Method that fades the screen in.
