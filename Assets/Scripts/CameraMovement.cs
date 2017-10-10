@@ -48,19 +48,30 @@ public class CameraMovement : MonoBehaviour
     {
         myTransform = gameObject.transform;
         lastPosition = myTransform.position;
+
+        GameManager.instance.onPlayerRespawning += playerDeath;
     }
 
+    /// <summary>
+    /// Method that gets called when the palyer dies to shake the camera.
+    /// </summary>
+    private void playerDeath()
+    {
+        Timing.RunCoroutine(Shake(0.2f, 5f));
+    }
+
+    /// <summary>
+    /// Method that reselects the player.
+    /// </summary>
     public void UpdatePlayer()
     {
         player = GameObject.FindGameObjectWithTag("Player");
         targetTransform = player.gameObject.transform;
-
-        Timing.RunCoroutine(Shake(0.2f, 5f));
     }
 
     void Update()
     {
-
+        //Moves the camera to the player.
         if (player != null)
         {
             currentLocation = lastPosition;
@@ -70,6 +81,7 @@ public class CameraMovement : MonoBehaviour
             myTransform.position = currentLocation + distance * acceleration * Time.deltaTime;
             lastPosition = myTransform.position;
         }
+        //Adds camera shake if there is a displacement.
         myTransform.position += shakeDisplacement;
     }
 }

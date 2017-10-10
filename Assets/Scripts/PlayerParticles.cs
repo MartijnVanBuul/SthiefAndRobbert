@@ -4,8 +4,14 @@ using UnityEngine;
 
 public class PlayerParticles : MonoBehaviour
 {
-
     private ParticleSystem myParticleSystem;
+
+    public static PlayerParticles instance;
+
+    private void Awake()
+    {
+        instance = this;
+    }
 
     private void Start()
     {
@@ -159,6 +165,8 @@ public class PlayerParticles : MonoBehaviour
     /// <returns>Emits the particles over time.</returns>
     public void EmitDeathParticles(Transform playerTransform, Vector2 emitDirection)
     {
+        Vector3 position = playerTransform.position;
+
         var emitParams = new ParticleSystem.EmitParams();
 
         for (int i = 0; i < 20; i++)

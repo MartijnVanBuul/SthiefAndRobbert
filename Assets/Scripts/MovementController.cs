@@ -9,9 +9,10 @@ public class MovementController : MonoBehaviour
     private const float collisionSize = 0.5f;
     private const float maxSpeed = 25f;
 
-    private Vector2 currentSpeed;
+    public Vector2 currentSpeed;
     private Vector2 targetSpeed;
 
+    private bool isActive = true;
     private bool canDash;
     private bool isGrounded;
     private bool canWallJump;
@@ -29,59 +30,95 @@ public class MovementController : MonoBehaviour
 
     private RaycastHit2D detectionHit;
 
-    private PlayerParticles myParticles;
-
     private void Start()
     {
-        myParticles = GetComponentInChildren<PlayerParticles>();
+        //Subscribe to death and respawn events.
+        GameManager.instance.onPlayerRespawning += playerDied;
+        GameManager.instance.onPlayerRespawned += playerRespawned;
+        GameManager.instance.onPlayerFinished += playerFinished;
+    }
+
+    private void OnDestroy()
+    {
+        //Unsubscribe to death and respawn events.
+        GameManager.instance.onPlayerRespawning -= playerDied;
+        GameManager.instance.onPlayerRespawned -= playerRespawned;
+        GameManager.instance.onPlayerFinished -= playerFinished;
+    }
+
+    /// <summary>
+    /// Method that gets called when the player finishes the level.
+    /// </summary>
+    private void playerFinished()
+    {
+        isActive = false;
+    }
+
+    /// <summary>
+    /// Method that gets called when the player dies.
+    /// </summary>
+    private void playerDied()
+    {
+        isActive = false;
+    }
+
+    /// <summary>
+    /// Method that gets called when the player has respawned.
+    /// </summary>
+    private void playerRespawned()
+    {
+        isActive = true;
     }
 
     // Update is called once per frame
     void Update()
     {
-        //Adding gravity to the player.
-        targetSpeed.y = currentSpeed.y + gravity;
-
-        //Checking if player is pressing any buttons or moving their control sticks.
-        CheckInput();
-
-        //Clamping the speed to the maxSpeed.
-        currentSpeed.x = Mathf.Clamp(currentSpeed.x, -maxSpeed, maxSpeed);
-        currentSpeed.y = Mathf.Clamp(currentSpeed.y, -maxSpeed, maxSpeed);
-
-        //Creating particles according to the speed of the player.
-        if (maxSpeed - Random.Range(Mathf.Abs(currentSpeed.x), maxSpeed) < 1 && isGrounded && Mathf.Abs(currentSpeed.x) > 0.3f)
-            myParticles.EmitRunParticles(transform, currentSpeed.x * Vector2.right);
-        
-        //Checking the collision of the player.
-        Vector2 expectedSpeed = currentSpeed;
-        bool playerStopped = false;
-
-        //Checking if the player was stopped during gameplay before checking the directional collision.
-        playerStopped = VerticalEnvironmentCollisionCheck();
-        if (playerStopped)
-            HorizontalEnvironmentCollisionCheck();
-        else
-            playerStopped = HorizontalEnvironmentCollisionCheck();
-
-        if(!playerStopped)
-            DirectionalEnvironmentCollisionCheck(expectedSpeed);
-
-        //Moving the player.
-        transform.Translate(currentSpeed * Time.deltaTime);
-
-        //Checking if the player made a full step yet.
-        if(isGrounded)
-            distanceSinceStep += Mathf.Abs(currentSpeed.x) * Time.deltaTime;
-
-        if(distanceSinceStep > stepDistance)
+        if (isActive)
         {
-            distanceSinceStep -= stepDistance;
-            PlayerSounds.instance.PlaySoundEffect(PlayerSounds.E_SoundEffects.step, 0.4f, (Mathf.Abs(currentSpeed.x) / maxSpeed));
-        }
+            //Adding gravity to the player.
+            targetSpeed.y = currentSpeed.y + gravity;
 
-        //Setting wallJumped to false at end of frame.
-        wallJumped = false;
+            //Checking if player is pressing any buttons or moving their control sticks.
+            CheckInput();
+
+            //Clamping the speed to the maxSpeed.
+            currentSpeed.x = Mathf.Clamp(currentSpeed.x, -maxSpeed, maxSpeed);
+            currentSpeed.y = Mathf.Clamp(currentSpeed.y, -maxSpeed, maxSpeed);
+
+            //Creating particles according to the speed of the player.
+            if (maxSpeed - Random.Range(Mathf.Abs(currentSpeed.x), maxSpeed) < 1 && isGrounded && Mathf.Abs(currentSpeed.x) > 0.3f)
+                PlayerParticles.instance.EmitRunParticles(transform, currentSpeed.x * Vector2.right);
+
+            //Checking the collision of the player.
+            Vector2 expectedSpeed = currentSpeed;
+            bool playerStopped = false;
+
+            //Checking if the player was stopped during gameplay before checking the directional collision.
+            playerStopped = VerticalEnvironmentCollisionCheck();
+            if (playerStopped)
+                HorizontalEnvironmentCollisionCheck();
+            else
+                playerStopped = HorizontalEnvironmentCollisionCheck();
+
+            if (!playerStopped)
+                DirectionalEnvironmentCollisionCheck(expectedSpeed);
+
+            //Moving the player.
+            transform.Translate(currentSpeed * Time.deltaTime);
+
+            //Checking if the player made a full step yet.
+            if (isGrounded)
+                distanceSinceStep += Mathf.Abs(currentSpeed.x) * Time.deltaTime;
+
+            if (distanceSinceStep > stepDistance)
+            {
+                distanceSinceStep -= stepDistance;
+                PlayerSounds.instance.PlaySoundEffect(PlayerSounds.E_SoundEffects.step, 0.4f, (Mathf.Abs(currentSpeed.x) / maxSpeed));
+            }
+
+            //Setting wallJumped to false at end of frame.
+            wallJumped = false;
+        }
     }
 
 
@@ -101,24 +138,13 @@ public class MovementController : MonoBehaviour
             //If there was a collision, reduce the vertical movement of the player.
             if (detectionHit)
             {
-                //If player hits the finish, let him finish the level.
-                if (detectionHit.collider.CompareTag("Finish"))
-                    GameManager.instance.Finish();
-
-                //If player hits an obstacle, let him respawn.
-                if (detectionHit.collider.CompareTag("Obstacle"))
-                {
-                    myParticles.EmitDeathParticles(transform, currentSpeed);
-                    GameManager.instance.Respawn(gameObject);
-                }
-
                 if (Mathf.Sign(currentSpeed.y) < 0)
                 {
                     if (!isGrounded)
                     {
                         isGrounded = true;
                         canDash = true;
-                        StartCoroutine(myParticles.EmitLandingParticles(transform, currentSpeed.x * Vector2.right));
+                        StartCoroutine(PlayerParticles.instance.EmitLandingParticles(transform, currentSpeed.x * Vector2.right));
                     }
                 }
 
@@ -172,19 +198,6 @@ public class MovementController : MonoBehaviour
                 //If there was a collision, reduce the horizontal movement of the player.
                 if (detectionHit)
                 {
-                    //If player hits the finish, let him finish the level.
-                    if (detectionHit.collider.CompareTag("Finish"))
-                    {
-                        GameManager.instance.Finish();
-                    }
-
-                    //If player hits an obstacle, let him respawn.
-                    if (detectionHit.collider.CompareTag("Obstacle"))
-                    {
-                        myParticles.EmitDeathParticles(transform, currentSpeed);
-                        GameManager.instance.Respawn(gameObject);
-                    }
-
                     //Checking if there is a wall that let's the player pass from one side.
                     if (detectionHit.collider.GetComponent<HorizontalWall>() != null)
                     {
@@ -259,9 +272,6 @@ public class MovementController : MonoBehaviour
         else if (wallStick < 0)
             canWallJump = false;
 
-        //Setting the speed of the player
-        currentSpeed = new Vector2(Input.GetAxis("Horizontal"), currentSpeed.y);
-
         //Setting the targetSpeed in the horizontal direction.
         targetSpeed.x = Input.GetAxis("Horizontal") * maxSpeed;
 
@@ -270,7 +280,7 @@ public class MovementController : MonoBehaviour
         {
             currentSpeed.x = 0;
             targetSpeed.x = maxSpeed * Input.GetAxis("Horizontal") * 1.75f;
-            StartCoroutine(myParticles.EmitDashParticles(transform, currentSpeed.x * Vector2.right));
+            StartCoroutine(PlayerParticles.instance.EmitDashParticles(transform, currentSpeed.x * Vector2.right));
             PlayerSounds.instance.PlaySoundEffect(PlayerSounds.E_SoundEffects.brake);
         }
 
@@ -282,7 +292,7 @@ public class MovementController : MonoBehaviour
             {
                 InputBuffer.ConsumedAction(InputBuffer.jumpAction);
 
-                StartCoroutine(myParticles.EmitJumpParticles(transform, currentSpeed.x * Vector2.right));
+                StartCoroutine(PlayerParticles.instance.EmitJumpParticles(transform, currentSpeed.x * Vector2.right));
                 targetSpeed.y = jumpPower;
                 isGrounded = false;
 
@@ -296,7 +306,7 @@ public class MovementController : MonoBehaviour
             {
                 InputBuffer.ConsumedAction(InputBuffer.jumpAction);
 
-                StartCoroutine(myParticles.EmitWallJumpParticles(transform, currentSpeed));
+                StartCoroutine(PlayerParticles.instance.EmitWallJumpParticles(transform, currentSpeed));
 
                 targetSpeed.y += jumpPower;
                 currentSpeed.x = -Mathf.Sign(wallJumpDirection) * jumpPower;
