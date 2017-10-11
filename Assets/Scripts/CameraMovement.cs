@@ -23,6 +23,8 @@ public class CameraMovement : MonoBehaviour
     private Vector3 shakeDisplacement;
     private float acceleration = 4;
 
+    private Vector3 levelCentrePosition;
+
     void Awake()
     {
         instance = this;
@@ -48,6 +50,8 @@ public class CameraMovement : MonoBehaviour
     {
         myTransform = gameObject.transform;
         lastPosition = myTransform.position;
+
+        levelCentrePosition = GameObject.FindGameObjectWithTag("LevelCentre").transform.position;
 
         GameManager.instance.onPlayerRespawning += playerDeath;
     }
@@ -75,7 +79,7 @@ public class CameraMovement : MonoBehaviour
         if (player != null)
         {
             currentLocation = lastPosition;
-            targetLocation = new Vector3(targetTransform.position.x, targetTransform.position.y, 0) + displacement;
+            targetLocation = new Vector3(targetTransform.position.x, targetTransform.position.y, 0) + displacement + (levelCentrePosition - myTransform.position).normalized * Mathf.Min((levelCentrePosition - myTransform.position).magnitude, 5);
 
             distance = targetLocation - currentLocation;
             myTransform.position = currentLocation + distance * acceleration * Time.deltaTime;

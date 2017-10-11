@@ -24,6 +24,7 @@ public class PickUpBehaviour : MonoBehaviour {
         //Disabling components.
         GetComponent<SpriteRenderer>().enabled = false;
         GetComponent<Collider2D>().enabled = false;
+        transform.GetChild(0).gameObject.SetActive(false);
 
         pickedUp = true;
 
@@ -40,6 +41,7 @@ public class PickUpBehaviour : MonoBehaviour {
             //Enabling components.
             GetComponent<SpriteRenderer>().enabled = true;
             GetComponent<Collider2D>().enabled = true;
+            transform.GetChild(0).gameObject.SetActive(true);
 
             pickedUp = false;
         }
