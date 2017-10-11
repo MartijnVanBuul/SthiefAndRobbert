@@ -6,29 +6,28 @@ public class PlayerVisualBehaviour : MonoBehaviour {
 
     private void Start()
     {
-        //Subscribe to death and respawn events.
-        GameManager.instance.onPlayerRespawning += playerDied;
-        GameManager.instance.onPlayerRespawned += playerRespawned;
+        //Subscribe to events.
+        GameManager.instance.OnActiveToggle += playerActivityToggle;
     }
 
     private void OnDestroy()
     {
-        //Unsubscribe to death and respawn events.
-        GameManager.instance.onPlayerRespawning -= playerDied;
-        GameManager.instance.onPlayerRespawned -= playerRespawned;
+        //Unsubscribe to events.
+        GameManager.instance.OnActiveToggle -= playerActivityToggle;
     }
 
-    private void playerDied()
+    /// <summary>
+    /// Method that gets called when the player toggles activity.
+    /// </summary>
+    private void playerActivityToggle(bool active)
     {
-        //TODO: Make this prettier.
-        //Makes the renderer darker to communicate loading.
-        GetComponent<SpriteRenderer>().color = new Color(0.2f, 0.2f, 0.2f, 1);
-
-    }
-
-    private void playerRespawned()
-    {
-        //Set to normal color to indicate ready.
-        GetComponent<SpriteRenderer>().color = new Color(1f, 1f, 1f, 1);
+        if (active)
+            //Set to normal color to indicate ready.
+            GetComponent<SpriteRenderer>().color = new Color(1f, 1f, 1f, 1);
+        else
+        {
+            //Makes the renderer darker to communicate loading.
+            GetComponent<SpriteRenderer>().color = new Color(0.2f, 0.2f, 0.2f, 1);
+        }
     }
 }

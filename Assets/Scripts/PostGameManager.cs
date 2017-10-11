@@ -17,10 +17,26 @@ public class PostGameManager : MonoBehaviour {
     public bool postGameActive;
     public bool postGameDone;
 
+    private bool loadingDone;
+    private bool scoreScreenDone;
+    private bool closingPostScreen;
+
     void Update()
     {
-        if (Input.GetButtonDown("Fire1") && postGameDone)
+        if (Input.GetButtonDown("Fire1") && postGameDone && !closingPostScreen)
             Timing.RunCoroutine(Deactivate());
+
+        if (Input.GetButtonDown("Fire1") && !postGameDone && postGameActive)
+        {
+            Timing.KillCoroutines();
+            scoreScreenDone = true;
+            TimeValueText.text = GameManager.instance.LevelTimer.ToString("F2");
+            ScoreValueText.text = GameManager.instance.Score.ToString("F0");
+
+            Timing.RunCoroutine(fadeInText());
+
+            postGameDone = true;
+        }
     }
 
     private void Awake()
@@ -33,15 +49,47 @@ public class PostGameManager : MonoBehaviour {
         //Activates all the children.
         transform.GetChild(0).gameObject.SetActive(true);
 
+        //Loading level in background.
+        Timing.RunCoroutine(LevelASyncLoader.instance.LoadSceneAsync(1));
+        LevelASyncLoader.instance.onFinishedLoading += onLoadingFinished;
+
         //Sets the value of time and score.
         Timing.RunCoroutine(AnimateValues());
 
         postGameActive = true;
     }
 
+    /// <summary>
+    /// Method for getting to know the level finished.
+    /// </summary>
+    private void onLoadingFinished()
+    {
+        //Loading is done.         
+        loadingDone = true;
+
+        //Loading in the continue text.
+        if (scoreScreenDone && loadingDone && !postGameDone)
+            Timing.RunCoroutine(fadeInText());
+
+        LevelASyncLoader.instance.onFinishedLoading -= onLoadingFinished;
+    }
+
+    private IEnumerator<float> fadeInText()
+    {
+        postGameDone = true;
+
+        //Fading in continue text.
+        ContinueText.gameObject.SetActive(true);
+        ContinueText.canvasRenderer.SetAlpha(0f);
+        ContinueText.CrossFadeAlpha(1, animateDuration / 2, true);
+
+        yield return Timing.WaitForSeconds(animateDuration);
+    }
 
     private IEnumerator<float> Deactivate()
     {
+        closingPostScreen = true;
+
         //Fading out texts.
         foreach (Text text in transform.GetChild(0).GetComponentsInChildren<Text>())
         {
@@ -57,19 +105,18 @@ public class PostGameManager : MonoBehaviour {
         postGameActive = false;
         postGameDone = false;
 
-        Timing.RunCoroutine(FadeManager.instance.FadeOut(animateDuration));
-
+        LevelASyncLoader.instance.AllowSceneActivation();
     }
 
     private IEnumerator<float> AnimateValues()
     {
         //Moves the text objects
         GetComponentInChildren<Animator>().SetTrigger("MoveDown");
-        yield return Timing.WaitForSeconds(animateDuration + 0.05f);
+        yield return Timing.WaitForSeconds(animateDuration * 1.1f);
 
         //Sets the value of time.
         Timing.RunCoroutine(increaseValueOverTime(animateDuration, GameManager.instance.LevelTimer, TimeValueText, 2));
-        yield return Timing.WaitForSeconds(animateDuration + 0.05f);
+        yield return Timing.WaitForSeconds(animateDuration * 1.1f);
 
         //Sets the value of score.
         if (GameManager.instance.Score != 0)
@@ -78,14 +125,11 @@ public class PostGameManager : MonoBehaviour {
             yield return Timing.WaitForSeconds(animateDuration);
         }
 
-        //Fading in continue text.
-        ContinueText.gameObject.SetActive(true);
-        ContinueText.canvasRenderer.SetAlpha(0f);
-        ContinueText.CrossFadeAlpha(1, animateDuration / 2, true);
+        scoreScreenDone = true;
 
-        yield return Timing.WaitForSeconds(animateDuration);
-
-        postGameDone = true;
+        //Loading in the continue text.
+        if (scoreScreenDone && loadingDone)
+            Timing.RunCoroutine(fadeInText());
     }
 
 
@@ -103,9 +147,10 @@ public class PostGameManager : MonoBehaviour {
 
         while(timer < duration)
         {
-            timer += Time.deltaTime;
             //Sets Text object with correct value.
             textToUpdate.text = (targetValue * (timer / duration)).ToString("F" + decimals);
+
+            timer += Time.deltaTime;
 
             yield return Timing.WaitForOneFrame;
         }

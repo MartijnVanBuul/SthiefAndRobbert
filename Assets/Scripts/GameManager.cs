@@ -19,6 +19,8 @@ public class GameManager : MonoBehaviour {
     private bool respawning;
     public delegate void PlayerRespawning();
     public PlayerRespawning onPlayerRespawning;
+
+    private bool respawned;
     public delegate void PlayerRespawned();
     public PlayerRespawned onPlayerRespawned;
 
@@ -34,6 +36,11 @@ public class GameManager : MonoBehaviour {
     public delegate void ScoreChanged(float value);
     public ScoreChanged onScoreChanged;
 
+    //Score value and a delegate that broadcasts to subscribers.
+    public bool playerActive;
+    public delegate void PlayerActive(bool active);
+    public PlayerActive OnActiveToggle;
+
     private void Awake()
     {
         instance = this;
@@ -44,13 +51,21 @@ public class GameManager : MonoBehaviour {
         playerPrefab = (GameObject)Resources.Load("Prefabs/Player");
         respawnPoint = GameObject.FindGameObjectWithTag("Respawn");
 
-        StartCoroutine(spawnPlayer(true));
+        Timing.RunCoroutine(startGame());
+    }
+
+    IEnumerator<float> startGame()
+    {
+        Timing.RunCoroutine(spawnPlayer(true));
+
+        Timing.RunCoroutine(FadeManager.instance.FadeIn(0.5f));
+        yield return Timing.WaitForSeconds(0.5f);
     }
 
     private void Update()
     {
         //Adds time to timer.
-        if(!isFinished)
+        if(!isFinished && respawned)
             LevelTimer += Time.deltaTime;
     }
 
@@ -88,6 +103,7 @@ public class GameManager : MonoBehaviour {
         //Resetting time and score values.
         Score = 0;
         LevelTimer = 0;
+        respawned = false;
 
         //Level becomes unfinished, this should not be necessary.
         isFinished = false;
@@ -123,22 +139,31 @@ public class GameManager : MonoBehaviour {
         //Replacing the player reference for the camera.
         GetComponent<CameraMovement>().UpdatePlayer();
 
+        //Waiting for player to subscribe
         yield return Timing.WaitForOneFrame;
 
-        //Every subscriber gets notified of the player respawning.
-        if(!firstPlayer)
+        if (OnActiveToggle != null)
+            OnActiveToggle(false);
+
+        if (!firstPlayer)
             if (onPlayerRespawning != null)
                 onPlayerRespawning();
 
-        //Setting the time to negative the time it takes to reload.
-        LevelTimer = -respawnTime;
-        yield return Timing.WaitForSeconds(respawnTime);
+        if (firstPlayer)
+            //Waiting for longer to wait the fade out.
+            yield return Timing.WaitForSeconds(0.5f);
+        else
+            yield return Timing.WaitForSeconds(respawnTime);
 
         //Every subscriber gets notified of the player respawning.
         if (onPlayerRespawned != null)
             onPlayerRespawned();
 
+        if (OnActiveToggle != null)
+            OnActiveToggle(true);
+
         //Is no longer respawning.
         respawning = false;
+        respawned = true;
     }
 }

@@ -49,7 +49,7 @@ public class FadeManager : MonoBehaviour {
         FadeImage.canvasRenderer.SetAlpha(0);
 
         //Fades in using a transition image.
-        Timing.RunCoroutine(FadeIn(0.5f));
+        Timing.RunCoroutine(FadeOut(0.5f));
     }
 
     /// <summary>
@@ -57,7 +57,7 @@ public class FadeManager : MonoBehaviour {
     /// </summary>
     /// <param name="duration">How long it takes to complete the transition.</param>
     /// <returns></returns>
-    public IEnumerator<float> FadeIn(float duration)
+    public IEnumerator<float> FadeOut(float duration)
     {
         //Keeps track of how long the transition is taking.
         float time = 0;
@@ -85,15 +85,10 @@ public class FadeManager : MonoBehaviour {
     /// </summary>
     /// <param name="duration">How long it takes to complete the transition.</param>
     /// <returns></returns>
-    public IEnumerator<float> FadeOut(float duration)
+    public IEnumerator<float> FadeIn(float duration)
     {
         //Keeps track of how long the transition is taking.
         float time = 0;
-
-        //Resetting material value and setting the fade image to maintain black image.
-        TransitionMaterial.SetFloat("_Cutoff", 1);
-        FadeImage.canvasRenderer.SetAlpha(0);
-
 
         while (time < duration)
         {

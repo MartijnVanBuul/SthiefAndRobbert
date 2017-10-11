@@ -32,18 +32,16 @@ public class MovementController : MonoBehaviour
 
     private void Start()
     {
-        //Subscribe to death and respawn events.
-        GameManager.instance.onPlayerRespawning += playerDied;
-        GameManager.instance.onPlayerRespawned += playerRespawned;
+        //Subscribe to events.
         GameManager.instance.onPlayerFinished += playerFinished;
+        GameManager.instance.OnActiveToggle += playerActivityToggle;
     }
 
     private void OnDestroy()
     {
-        //Unsubscribe to death and respawn events.
-        GameManager.instance.onPlayerRespawning -= playerDied;
-        GameManager.instance.onPlayerRespawned -= playerRespawned;
+        //Unsubscribe to events.
         GameManager.instance.onPlayerFinished -= playerFinished;
+        GameManager.instance.OnActiveToggle -= playerActivityToggle;
     }
 
     /// <summary>
@@ -55,19 +53,11 @@ public class MovementController : MonoBehaviour
     }
 
     /// <summary>
-    /// Method that gets called when the player dies.
+    /// Method that gets called when the player toggles activity.
     /// </summary>
-    private void playerDied()
+    private void playerActivityToggle(bool active)
     {
-        isActive = false;
-    }
-
-    /// <summary>
-    /// Method that gets called when the player has respawned.
-    /// </summary>
-    private void playerRespawned()
-    {
-        isActive = true;
+        isActive = active;
     }
 
     // Update is called once per frame
