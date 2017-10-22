@@ -51,7 +51,10 @@ public class CameraMovement : MonoBehaviour
         myTransform = gameObject.transform;
         lastPosition = myTransform.position;
 
-        levelCentrePosition = GameObject.FindGameObjectWithTag("LevelCentre").transform.position;
+        if (GameObject.FindGameObjectWithTag("LevelCentre") != null)
+            levelCentrePosition = GameObject.FindGameObjectWithTag("LevelCentre").transform.position;
+        else
+            levelCentrePosition = Vector3.zero;
 
         GameManager.instance.onPlayerRespawning += playerDeath;
     }

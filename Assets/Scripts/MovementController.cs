@@ -4,7 +4,8 @@ using UnityEngine;
 
 public class MovementController : MonoBehaviour
 {
-    private const float gravity = -0.98f;
+    //private const float gravity = -0.98f;
+    private const float gravity = -1.2f;
     private const float gap = 0.01f;
     private const float collisionSize = 0.5f;
     private const float maxSpeed = 25f;
@@ -19,7 +20,7 @@ public class MovementController : MonoBehaviour
     private bool wallJumped;
 
     private float acceleration = 8f;
-    private float jumpPower = 25f;
+    private float jumpPower = 20f;
     private float lastAxisValue;
     private float wallJumpDirection;
     private float wallStick;
@@ -67,6 +68,9 @@ public class MovementController : MonoBehaviour
         {
             //Adding gravity to the player.
             targetSpeed.y = currentSpeed.y + gravity;
+
+            if (Input.GetButton("Fire1") && !isGrounded && targetSpeed.y > 0)
+                targetSpeed.y += jumpPower * Time.deltaTime * 1.5f;
 
             //Checking if player is pressing any buttons or moving their control sticks.
             CheckInput();
@@ -298,7 +302,9 @@ public class MovementController : MonoBehaviour
 
                 StartCoroutine(PlayerParticles.instance.EmitWallJumpParticles(transform, currentSpeed));
 
+                targetSpeed.y = Mathf.Clamp(targetSpeed.y, targetSpeed.y / 5, targetSpeed.y);
                 targetSpeed.y += jumpPower;
+
                 currentSpeed.x = -Mathf.Sign(wallJumpDirection) * jumpPower;
 
                 wallStick = -1;
