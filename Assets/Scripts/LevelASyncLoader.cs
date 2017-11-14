@@ -13,9 +13,15 @@ public class LevelASyncLoader : MonoBehaviour {
 
     private void Awake()
     {
-        //Making singleton and keeping it.
-        instance = this;
-        DontDestroyOnLoad(this);
+        if (instance == null)
+        {
+            //Making singleton and keeping it.
+            instance = this;
+            DontDestroyOnLoad(this);
+        }
+        else
+            Destroy(this);
+
     }
 
 

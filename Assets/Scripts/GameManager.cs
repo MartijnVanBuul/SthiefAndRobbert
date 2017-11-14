@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using MovementEffects;
+using XInputDotNetPure;
 
 public class GameManager : MonoBehaviour {
 
@@ -67,6 +68,8 @@ public class GameManager : MonoBehaviour {
         //Adds time to timer.
         if(!isFinished && respawned)
             LevelTimer += Time.deltaTime;
+
+
     }
 
     /// <summary>
@@ -118,6 +121,8 @@ public class GameManager : MonoBehaviour {
 
     IEnumerator<float> destroyPlayer(GameObject playerToBeDestroyed)
     {
+        GamePad.SetVibration((PlayerIndex)0, 1, 1);
+
         //Is now respawning.
         respawning = true;
 
@@ -126,7 +131,13 @@ public class GameManager : MonoBehaviour {
 
         //Destroy palyer after one frame.
         yield return Timing.WaitForOneFrame;
+
         Destroy(playerToBeDestroyed);
+
+        yield return Timing.WaitForSeconds(0.1f);
+
+        GamePad.SetVibration((PlayerIndex)0, 0, 0);
+
     }
 
     IEnumerator<float> spawnPlayer(bool firstPlayer = false)
@@ -165,5 +176,15 @@ public class GameManager : MonoBehaviour {
         //Is no longer respawning.
         respawning = false;
         respawned = true;
+    }
+
+    private void OnDestroy()
+    {
+        GamePad.SetVibration((PlayerIndex)0, 0, 0);
+    }
+
+    private void OnDisable()
+    {
+        GamePad.SetVibration((PlayerIndex)0, 0, 0);
     }
 }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using MovementEffects;
+using UnityEngine.SceneManagement;
 
 public class PostGameManager : MonoBehaviour {
 
@@ -50,7 +51,7 @@ public class PostGameManager : MonoBehaviour {
         transform.GetChild(0).gameObject.SetActive(true);
 
         //Loading level in background.
-        Timing.RunCoroutine(LevelASyncLoader.instance.LoadSceneAsync(1));
+        Timing.RunCoroutine(LevelASyncLoader.instance.LoadSceneAsync((SceneManager.GetActiveScene().buildIndex + 1) % SceneManager.sceneCountInBuildSettings));
         LevelASyncLoader.instance.onFinishedLoading += onLoadingFinished;
 
         //Sets the value of time and score.

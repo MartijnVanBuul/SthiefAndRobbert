@@ -9,7 +9,7 @@ public class CameraMovement : MonoBehaviour
     public static CameraMovement instance;
 
     private GameObject player;
-    private Vector3 displacement = new Vector3(0, 5, -20);
+    private Vector3 displacement = new Vector3(0, 5, -40);
 
     private Transform myTransform;
     private Transform targetTransform;
